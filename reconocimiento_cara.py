@@ -96,6 +96,7 @@ def guardar_imagen(frame: np.ndarray, path: str, name: str) -> str:
                     img_path = os.path.join(path, f'{name}.jpg')
                     cv2.imwrite(img_path, frame[y:y+h, x:x+w])  # Guardar solo la región de la cara
                     capture_image = True  # Marcar que la imagen ha sido capturada
+                    caras_diccionario[name] = w*h  # Guardamos el nombre con su área en el diccionario
                     return img_path  # Devolver la ruta completa del archivo de imagen guardado
 
 
@@ -150,6 +151,7 @@ start_time = None
 nameID = None
 estado = 'esperando'
 mensaje_mostrado = False  # Flag para controlar si se ha mostrado el mensaje de inicio de reconocimiento
+caras_diccionario = {}  # Diccionario para guardar la información de las caras (nombre y área)
 
 try:
     while True:
