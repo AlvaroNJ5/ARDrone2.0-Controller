@@ -33,6 +33,3 @@ def PID_control(area_ref, area, cx, cy):
     dist_x_ant = dist_x
 
     return adat, arab, id
-
-
-
