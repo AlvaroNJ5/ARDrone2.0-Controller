@@ -7,6 +7,7 @@ import time
 import os
 import tempfile
 from utils import *
+import PID
 
 from pyardrone import ARDrone
 import logging
@@ -54,13 +55,6 @@ ya que sin el drone no lo puedo probar.
 
 w_target = 224
 h_target = 224
-a_target = w_target*h_target
-pid1 = [0.2, 0.2, 0]     #kp, kd, ki
-pid2 = [0.3, 0.3, 0]
-pid3 = [0.3, 0.3, 0]
-pError1 = 0
-pError2 = 0
-pError3 = 0
 
 def dibujar_cuenta_atrás(frame: np.ndarray, countdown: int) -> None:
     'Función que dibuja la cuenta atrás en la imágen'
@@ -73,7 +67,8 @@ def dibujar_cuenta_atrás(frame: np.ndarray, countdown: int) -> None:
     text_y = (height + text_size[1]) // 2
 
     # Dibujamos la cuenta atrás
-    cv2.putText(frame, str(countdown), (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
+    if countdown != 0:
+        cv2.putText(frame, str(countdown), (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
 
 def guardar_imagen(frame: np.ndarray, path: str, name: str) -> str:
     'Función para guardar la imágen con la que se va a hacer el reconocimiento'
@@ -202,16 +197,15 @@ try:
                 os.unlink(temp_img_path)  # Eliminar la imagen temporal
                 if similarity is not None:
                     print(f"Similitud: {similarity}")
-                if similarity is not None and similarity > 0.5:
+                if similarity is not None and similarity > 0.3:
                     cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)  # Dibujar rectángulo verde si la similitud es alta
                     cv2.putText(frame, nameID, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2) #Mostrar el nombre de la persona
                     # Para el control PID guardamos las variables útiles (centro de la cara (x e y) y área de la cara)
                     cx = x + w//2
                     cy = y + h//2
                     area = w*h
-                    trackFace(drone, cx, w_target, pid1, pError1)
-                    height_control(drone, cy, h_target, pid2, pError2)
-                    #dist_control(drone, area, a_target, pid3, pError3)
+                    adat, arab, id = PID.PID_control(caras_diccionario[nameID], area, cx, cy)
+                    drone.move(forward=-adat, backward=0, left=0,right=0,up=arab,down=0,cw=-id,ccw=0)
                 else:
                     cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)  # Dibujar rectángulo rojo si la similitud es baja
                     drone.hover()
@@ -225,7 +219,9 @@ try:
                 estado = 'reconociendo'      
             else:
                 print("La persona seleccionada no existe. Por favor, introduzca el nombre de nuevo.")
-                
+        elif estado == 'aterrizaje':
+            while drone.state.fly_mask:
+                drone.land()
         
 
         cv2.imshow('Frame', frame)
@@ -243,6 +239,8 @@ try:
             estado = 'reconociendo'
         elif key == ord('c'):
             estado = 'cambiar_objetivo'
+        elif key == ord('l'):
+            estado = 'aterrizaje'
 
 finally:
     drone.close()
