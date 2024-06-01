@@ -39,11 +39,11 @@ def drone_get_frame(drone, w=360, h=240):
 
 def takeoff_control(drone):
     init_battery = get_battery(drone)
-    if  init_battery > 25:
+    if init_battery > 25:
         while not drone.state.fly_mask:
             drone.takeoff()
         drone.hover()
-        time.sleep(4)
+        time.sleep(1)
 
 def findFace(img):
     faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
