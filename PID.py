@@ -15,7 +15,7 @@ def PID_control(area_ref, area, cx, cy):
     id = 0
     #Control de adelante (ad) - atrás (at)
     ratio = area / area_ref
-    if abs(ratio - ratio_ant) > 0.1:
+    if ratio > 1.1 or ratio < 1:
         adat = pid[0] * (ratio - 1) + pid[1] * (ratio - ratio_ant)
         adat = np.clip(adat, -0.3, 0.3)
     ratio_ant = ratio
