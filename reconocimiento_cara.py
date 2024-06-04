@@ -87,11 +87,11 @@ def guardar_imagen(frame: np.ndarray, path: str, name: str) -> str:
             faces = detector_caras.detectMultiScale(frame, 1.3, 5)
             if len(faces) > 0:
                 for (x, y, w, h) in faces:
-                    cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+                    #cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
                     img_path = os.path.join(path, f'{name}.jpg')
                     cv2.imwrite(img_path, frame[y:y+h, x:x+w])  # Guardar solo la región de la cara
                     capture_image = True  # Marcar que la imagen ha sido capturada
-                    caras_diccionario[name] = w*h  # Guardamos el nombre con su área en el diccionario
+                    caras_diccionario[name] = w*h/4  # Guardamos el nombre con su área en el diccionario
                     return img_path  # Devolver la ruta completa del archivo de imagen guardado
 
 

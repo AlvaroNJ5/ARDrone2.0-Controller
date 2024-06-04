@@ -15,16 +15,16 @@ def PID_control(area_ref, area, cx, cy):
     id = 0
     #Control de adelante (ad) - atrás (at)
     ratio = area / area_ref
-    if ratio > 1.1 or ratio < 1:
+    if ratio > 1.3 or ratio < 0.7:
         adat = pid[0] * (ratio - 1) + pid[1] * (ratio - ratio_ant)
-        adat = np.clip(adat, -0.3, 0.3)
+        adat = np.clip(adat, -0.1, 0.1)
     ratio_ant = ratio
 
     #Control de arriba (ar) - abajo (ab)
     dist_y = 224 - cy
     if abs(dist_y) >= 30:
         arab = pid[0] * dist_y + pid[1] * (dist_y - dist_y_ant)
-        arab = np.clip(arab, -0.15, 0.15)
+        arab = np.clip(arab, -0.1, 0.1)
     dist_y_ant = dist_y
     
     #Control de izquierda (i) - derecha (d)
