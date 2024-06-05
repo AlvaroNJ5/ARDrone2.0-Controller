@@ -8,7 +8,7 @@ import os
 import tempfile
 from utils import *
 import PID
-
+import json
 from pyardrone import ARDrone
 import logging
 
@@ -74,6 +74,7 @@ def guardar_imagen(frame: np.ndarray, path: str, name: str) -> str:
     'Función para guardar la imágen con la que se va a hacer el reconocimiento'
     global capture_image, start_time
 
+    json_data = json.load(open('face_area_data.json'))
     if start_time is None:
         start_time = time.time()
 
@@ -92,6 +93,10 @@ def guardar_imagen(frame: np.ndarray, path: str, name: str) -> str:
                     cv2.imwrite(img_path, frame[y:y+h, x:x+w])  # Guardar solo la región de la cara
                     capture_image = True  # Marcar que la imagen ha sido capturada
                     caras_diccionario[name] = w*h/4  # Guardamos el nombre con su área en el diccionario
+                    json_data[name] = w*h/2
+                    json_object = json.dumps(json_data, indent=4)
+                    with open("face_area_data.json", "w") as outfile:
+                        outfile.write(json_object)
                     return img_path  # Devolver la ruta completa del archivo de imagen guardado
 
 
@@ -178,14 +183,17 @@ try:
                 print('TAKEOFF STARTING')
                 print('TAKEOFF STARTING')
                 print('TAKEOFF STARTING\n\n\n')
-                time.sleep(10)
-                takeoff_control(drone)
+                #time.sleep(10)
+                #takeoff_control(drone)
 
             cv2.putText(frame, 'Estado: Reconociendo', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
             faces = detector_caras.detectMultiScale(frame, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
             # Reinicializar la información de la cara si no se detectan caras en la imagen (en caso de que se quiera trabajar asi para el control, es decir, si no hay cara el área de la cara es 0 y la posicion centrada)
             cx, cy, area = 0, 0, 0
+
+            json_data = json.load(open('face_area_data.json'))
+            area_ref = json_data[nameID]
 
             for (x, y, w, h) in faces:
                 face_img = frame[y:y+h, x:x+w] 
@@ -197,14 +205,14 @@ try:
                 os.unlink(temp_img_path)  # Eliminar la imagen temporal
                 if similarity is not None:
                     print(f"Similitud: {similarity}")
-                if similarity is not None and similarity > 0.3:
+                if similarity is not None and similarity > 0.6:
                     cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)  # Dibujar rectángulo verde si la similitud es alta
                     cv2.putText(frame, nameID, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2) #Mostrar el nombre de la persona
                     # Para el control PID guardamos las variables útiles (centro de la cara (x e y) y área de la cara)
                     cx = x + w//2
                     cy = y + h//2
                     area = w*h
-                    adat, arab, id = PID.PID_control(caras_diccionario[nameID], area, cx, cy)
+                    adat, arab, id = PID.PID_control(area_ref, area, cx, cy)
                     drone.move(forward=-adat, backward=0, left=0,right=0,up=arab,down=0,cw=-id,ccw=0)
                 else:
                     cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)  # Dibujar rectángulo rojo si la similitud es baja
